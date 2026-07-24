@@ -1,0 +1,2 @@
+* when username : 'problem_user' logs into app with correct password, the app should navigate to the inventory page with the following text displayed against at least one of the products on this page,
+  'carry.allTheThings() with the sleek, streamlined Sly Pack that melds uncompromising style with unequaled laptop and tablet protection.'

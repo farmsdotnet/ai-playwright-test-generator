@@ -5,9 +5,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3509e951-4685-47c0-863a-c18c039bc311" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/project_structure_tree/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/project_structure_tree/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/project_structure_tree/future_enhancements.txt" beforeDir="false" afterPath="$PROJECT_DIR$/project_structure_tree/future_enhancements.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/OLD_generate_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/redundant_do_not_use/OLD_generate_test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/context_store/global_domain_rules.md" beforeDir="false" afterPath="$PROJECT_DIR$/context_store/global_domain_rules.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/do_not_use.py" beforeDir="false" afterPath="$PROJECT_DIR$/redundant_do_not_use/do_not_use.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/generate_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/generate_test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pipeline.py" beforeDir="false" afterPath="$PROJECT_DIR$/pipeline.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -62,6 +66,7 @@
       <recent name="C:\Users\farma\PycharmProjects\ai-qa-framework\tests" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Dev Projects 2026 Local\GIT\ai_qa_framework\redundant_do_not_use" />
       <recent name="C:\Users\farma\PycharmProjects\ai-qa-framework\tests" />
       <recent name="C:\Users\farma\PycharmProjects\ai-qa-framework\tests\staging\farms_old test-tests" />
       <recent name="C:\Users\farma\PycharmProjects\ai-qa-framework\src\pages" />

@@ -14,7 +14,7 @@ def read_file(path):
 
 def get_pom_references():
     """Scans src/pages to give the AI context on available page objects."""
-    pages_dir = "src/pages"
+    pages_dir = "../src/pages"
     reference_string = "Available Page Objects and Methods:\n"
 
     if os.path.exists(pages_dir):
@@ -29,7 +29,7 @@ def get_pom_references():
 
 
 def generate_test_case(issue_id):
-    main_skill = read_file("context_store/OLD_glob_dom_rules.md")
+    main_skill = read_file("../context_store/OLD_glob_dom_rules.md")
     child_skill = read_file(f"context_store/child_contexts/{issue_id}_ac.md")
     pom_reference = get_pom_references()
 
@@ -63,7 +63,7 @@ def generate_test_case(issue_id):
             code_match = re.search(r"```python(.*?)```", raw_output, re.DOTALL)
             code = code_match.group(1).strip() if code_match else raw_output.strip()
 
-            os.makedirs("tests/pending_review", exist_ok=True)
+            os.makedirs("../tests/pending_review", exist_ok=True)
             pending_path = f"tests/pending_review/test_{issue_id.lower()}.py"
             with open(pending_path, "w", encoding="utf-8") as f:
                 f.write(code)

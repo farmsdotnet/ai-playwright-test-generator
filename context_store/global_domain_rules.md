@@ -1,9 +1,12 @@
 # Global Domain Rules & Framework Architecture
 
 ## Target Application
-- Base URL: https://saucedemo.com
+- ALWAYS USE the SPECIFIED Base URL here: https://saucedemo.com
 - Core application identity: Swag Labs E-Commerce Portal
 - Authentic login state is managed via `src/pages/login_page.py`
+
+## Linear Board
+- ALWAYS explicitly use the Acceptance Criteria (aka AC) taken from the Linear Tkt to generate ALL NEW Tests!!!!
 
 ## Framework Guidelines
 - Language: Python 3.x using Pytest test runner
