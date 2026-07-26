@@ -8,13 +8,13 @@ def test_far_6():
         context = browser.new_context()
         page = context.new_page()
         try:
-            browser = p.chromium.launch(headless=False, slow_mo=1000)
-            page = browser.new_page()
             login_page = LoginPage(page)
-            login_page.login('problem_user', 'secret_sauce')
+            login_page.login('standard_user', 'secret_sauce')
             page.goto('https://saucedemo.com/inventory.html')
-            assert "carry.allTheThings() with the sleek, streamlined Sly Pack that melds uncompromising style with unequaled laptop and tablet protection." in page.inner_text("div.inventory_item_description")
-            browser.close()
+            inventory_page = InventoryPage(page)
+            inventory_page.sort_items_by_price_low_to_high()
+            assert inventory_page.get_first_item_name() == "Sauce Labs Onesie"
+            assert inventory_page.get_first_item_price() == "$7.99"
             print("🚀 Test executed successfully!")
         finally:
             context.close()

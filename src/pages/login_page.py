@@ -15,3 +15,12 @@ class LoginPage(BasePage):
         self.username_input.fill(username)
         self.password_input.fill(password)
         self.login_button.click()
+
+    def enter_username(self, username):
+        self.page.locator('[data-test="username"]').fill(username)
+
+    def enter_password(self, password):
+        self.page.locator('[data-test="password"]').fill(password)
+
+    def click_login(self):
+        self.page.locator('[data-test="login-button"]').click()

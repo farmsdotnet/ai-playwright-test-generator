@@ -5,13 +5,21 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3509e951-4685-47c0-863a-c18c039bc311" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/context_store/pipeline_checkpoints/far-6_checkpoint_pom_state.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/context_store/pipeline_checkpoints/far-6_checkpoint_requirements.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/manifest_generator.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/pre_heal_pipe_1.62.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/pages/src/pages/__init__.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/OLD_generate_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/redundant_do_not_use/OLD_generate_test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/context_store/child_contexts/FAR-5_ac.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/context_store/child_contexts/FAR-6_ac.md" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/context_store/global_domain_rules.md" beforeDir="false" afterPath="$PROJECT_DIR$/context_store/global_domain_rules.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/do_not_use.py" beforeDir="false" afterPath="$PROJECT_DIR$/redundant_do_not_use/do_not_use.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/generate_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/generate_test.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pipeline.py" beforeDir="false" afterPath="$PROJECT_DIR$/pipeline.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/pages/login_page.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/pages/login_page.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/staging/test_far_5.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/staging/test_far_6.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/staging/sample_bad_code.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -55,7 +63,7 @@
     "Python tests.Python tests for test_tkt-999.test_invalid_login_with_locked_out_user.executor": "Run",
     "Python.run_staging.executor": "Run",
     "RunOnceActivity.ShowReadmeOnStart": "true",
-    "git-widget-placeholder": "ai-qa-pipeline-v1.62",
+    "git-widget-placeholder": "ai-qa-pipeline-v1.63__OTF__Self__healer",
     "last_opened_file_path": "C:/Dev Projects 2026 Local/GIT/ai_qa_framework"
   }
 }]]></component>

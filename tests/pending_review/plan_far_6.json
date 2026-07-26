@@ -1,0 +1,25 @@
+[
+  {
+    "class": "LoginPage",
+    "method": "login",
+    "args": [
+      "standard_user",
+      "secret_sauce"
+    ]
+  },
+  {
+    "class": "InventoryPage",
+    "method": "sort_products",
+    "args": [
+      "Price (Low to High)"
+    ]
+  },
+  {
+    "class": "InventoryPage",
+    "method": "verify_first_product",
+    "args": [
+      "Sauce Labs Onesie",
+      "$7.99"
+    ]
+  }
+]

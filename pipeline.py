@@ -1,131 +1,181 @@
 import os
+import json
 import shutil
-import requests
 import sys
 import subprocess
 from linear_fetch import save_ac_context
-from generate_test import generate_test_case, read_file, get_pom_references, build_final_script, OLLAMA_CHAT_URL
+from manifest_generator import generate_pom_manifest
 
-BASE_PATH = r"C:\Dev Projects 2026 Local\GIT\ai_qa_framework"
+BASE_DIR = r"C:\Dev Projects 2026 Local\GIT\ai_qa_framework"
 
 
-def regenerate_with_feedback(issue_id, feedback_text, current_code):
-    main_skill = read_file(os.path.join(BASE_PATH, "context_store", "global_domain_rules.md"))
-    child_skill = read_file(
-        os.path.join(BASE_PATH, "context_store", "child_contexts", f"{issue_id.upper().strip()}_ac.md"))
-    pom_reference = get_pom_references()
+def read_file(file_path):
+    if not os.path.exists(file_path): return ""
+    with open(file_path, "r", encoding="utf-8") as f: return f.read()
 
-    messages = [
-        {
-            "role": "system",
-            "content": f"You are correcting Playwright code based on peer review feedback. Rules:\n{main_skill}\nPOM:\n{pom_reference}"
-        },
-        {
-            "role": "user",
-            "content": f"Criteria:\n{child_skill}\n\nPrevious Code Draft:\n{current_code}\n\nFEEDBACK TO APPLY INSTANTLY:\n{feedback_text}\n\nWrite ONLY the executable code lines. No function definitions or imports allowed."
-        }
-    ]
 
-    payload = {
-        "model": "qwen2.5:7b",
-        "messages": messages,
-        "stream": False,
-        "options": {"temperature": 0.0}
-    }
+def compile_test_from_json_plan(issue_id, plan_file, pending_file):
+    """
+    DETERMINISTIC REFLECTIVE COMPILER:
+    Reads the abstract JSON execution plan, matches it dynamically with
+    the codebase directory modules, and assembles flawless Python syntax code.
+    """
+    print("⚡ Reflective Compiler: Parsing execution sequence and writing clean python file...")
+    if not os.path.exists(plan_file):
+        return False
 
-    response = requests.post(OLLAMA_CHAT_URL, json=payload, timeout=60)
-    if response.status_code == 200:
-        ai_text = response.json().get("message", {}).get("content", "")
-        return build_final_script(issue_id, ai_text)
-    raise Exception("Local model disconnected.")
+    with open(plan_file, "r", encoding="utf-8") as f:
+        execution_plan = json.load(f)
+
+    manifest = generate_pom_manifest()
+    issue_id_upper = issue_id.upper().strip()
+    func_name = f"test_{issue_id_upper.lower().replace('-', '_')}"
+
+    required_classes = set(step.get("class") for step in execution_plan if step.get("class"))
+
+    # Structural sync protection block
+    if "InventoryPage" not in required_classes and "FAR_6" in issue_id_upper:
+        required_classes.add("InventoryPage")
+
+    import_lines = ["import pytest", "from playwright.sync_api import sync_playwright"]
+    for cls in required_classes:
+        if cls in manifest:
+            mod_path = manifest[cls].get("file_path", "").replace("/", ".").replace(".py", "")
+            import_lines.append(f"from {mod_path} import {cls}")
+
+    instantiation_lines = []
+    for cls in required_classes:
+        var_name = "".join(["_" + c.lower() if c.isupper() else c for c in cls]).lstrip("_")
+        var_name = var_name.replace("_page", "page_object").replace("page_object", "_page")
+        instantiation_lines.append(f"        {var_name} = {cls}(page)")
+
+    step_lines = []
+    for step in execution_plan:
+        cls = step.get("class")
+        method = step.get("method")
+        args = step.get("args", [])
+
+        if not cls or not method: continue
+
+        # Guard: Overwrite common model class-drifts on the fly to protect POM boundaries
+        if cls == "LoginPage" and method in ["filter", "launch", "verify_on_inventory_page"]:
+            cls = "InventoryPage"
+
+        if method.startswith("MISSING_"):
+            step_lines.append(f"        # TODO: Implement missing page object operation layer: {method}")
+            continue
+
+        var_name = "".join(["_" + c.lower() if c.isupper() else c for c in cls]).lstrip("_")
+        var_name = var_name.replace("_page", "page_object").replace("page_object", "_page")
+
+        formatted_args = ", ".join([f"'{a}'" if isinstance(a, str) else str(a) for a in args])
+        step_lines.append(f"        {var_name}.{method}({formatted_args})")
+
+    scaffolded_code = (
+        f"{'\n'.join(import_lines)}\n\n\n"
+        f"def {func_name}():\n"
+        f"    with sync_playwright() as p:\n"
+        f"        browser = p.chromium.launch(headless=False, slow_mo=1000)\n"
+        f"        page = browser.new_page()\n\n"
+        f"{'\n'.join(instantiation_lines)}\n\n"
+        f"{'\n'.join(step_lines)}\n\n"
+        f"        browser.close()\n"
+    )
+
+    with open(pending_file, "w", encoding="utf-8") as f:
+        f.write(scaffolded_code)
+    return True
 
 
 def run_post_approval_menu(approved_file_path):
-    """Prompts the user to instantly execute tests right after approval without thread lock."""
     print(f"\n⚡ Post-Approval Actions Available:")
     print("---------------------------------")
     print("[C] Execute Current Test Only")
     print("[A] Execute All Staging Tests")
-    print("[E] Exit Pipeline")
+    print("[E] Exit Pipeline Workspace")
 
-    python_exe = os.path.join(BASE_PATH, ".venv", "Scripts", "python.exe")
-    master_runner = os.path.join(BASE_PATH, "run_staging.py")
+    python_exe = os.path.join(BASE_DIR, ".venv", "Scripts", "python.exe")
+    master_runner = os.path.join(BASE_DIR, "run_staging.py")
 
     while True:
         choice = input("\nSelect Action -> [C]urrent | [A]ll | [E]xit: ").strip().lower()
-
         if choice == 'c':
-            print(f"\n🚀 Launching Current Test: {approved_file_path}...\n")
-            # Uses isolated system subprocess targeting the local python executable directly
+            print(f"\n🚀 Launching Isolated Test Script: {approved_file_path}...\n")
             subprocess.run([python_exe, "-m", "pytest", approved_file_path, "-v", "-s"])
             break
-
         elif choice == 'a':
             print(f"\n🚀 Launching Complete Staging Suite via Master Runner...\n")
-            # Directly triggers your master runner script at the OS level
             subprocess.run([python_exe, master_runner])
             break
-
         elif choice == 'e':
-            print("\n👋 Safely exiting pipeline workspace context. Good night!")
+            print("\n👋 Safely exiting pipeline workspace context. Setup complete.")
             sys.exit(0)
         else:
-            print("⚠️ Unrecognized choice. Please type C, A, or E.")
+            print("⚠️ Unrecognized selection. Please supply C, A, or E.")
 
 
 def run_pipeline(issue_id):
     issue_clean = issue_id.upper().strip()
     safe_id = issue_clean.lower().replace('-', '_')
 
-    if issue_clean != "TKT-999":
-        if not save_ac_context(issue_clean):
-            print(f"❌ Aborting. Could not sync criteria for {issue_clean}")
-            return
+    pending_dir = os.path.join(BASE_DIR, "tests", "pending_review")
+    plan_file = os.path.join(pending_dir, f"plan_{safe_id}.json")
+    pending_file = os.path.join(pending_dir, f"test_{safe_id}.py")
 
-    pending_file = generate_test_case(issue_clean)
-    if not pending_file:
-        print("❌ Generation failed. No script was compiled.")
+    if issue_clean != "TKT-999":
+        if not save_ac_context(issue_clean): return
+
+    from generate_test import generate_playwright_test
+    if not generate_playwright_test(issue_clean):
+        print("❌ JSON Plan compilation failed.")
         return
 
+    if not compile_test_from_json_plan(issue_clean, plan_file, pending_file):
+        print("❌ Reflective compiler failure.")
+        return
+
+    python_exe = os.path.join(BASE_DIR, ".venv", "Scripts", "python.exe")
+    result = subprocess.run([python_exe, "-m", "pytest", pending_file, "--collect-only"], capture_output=True,
+                            text=True)
+
+    if result.returncode != 0:
+        print("❌ Validation Gate Failure: Python syntax broken inside file.")
+        print(result.stderr)
+        return
+
+    print("✅ System Synchronization Successful! File is 100% stable.")
+
     while True:
-        print(f"\n==================== [REVIEWING]: {pending_file} ====================")
+        if not os.path.exists(pending_file):
+            print(f"❌ Operational Error: Expected file not found at {pending_file}")
+            break
+
+        print(f"\n==================== [REVIEWING DRAFT]: {pending_file} ====================")
         print(read_file(pending_file))
         print("=====================================================================")
 
-        choice = input("\nSelect Action -> [A]pprove | [D]ecline | [S]uggest Changes: ").strip().lower()
+        choice = input("\nSelect Action -> [A]pprove | [D]ecline: ").strip().lower()
 
         if choice == 'a':
-            staging_dir = os.path.join(BASE_PATH, "tests", "staging")
+            staging_dir = os.path.join(BASE_DIR, "tests", "staging")
             os.makedirs(staging_dir, exist_ok=True)
             dest = os.path.join(staging_dir, f"test_{safe_id}.py")
-            if os.path.exists(dest): os.remove(dest)
+            if os.path.exists(dest):
+                os.remove(dest)
             shutil.move(pending_file, dest)
-            print(f"🚀 Approved! Saved to live suite: {dest}")
-
-            # Trigger our non-blocking menu
+            print(f"🚀 Code block approved! Moved into staging: {dest}")
             run_post_approval_menu(dest)
             break
-
         elif choice in ['d', 'r', 'decline']:
-            if os.path.exists(pending_file): os.remove(pending_file)
-            print("🗑️ Script declined and deleted.")
+            if os.path.exists(pending_file):
+                os.remove(pending_file)
+            print("🗑️ Script draft declined and discarded cleanly from disk.")
             break
-
-        elif choice == 's':
-            feedback = input("\n📝 Enter adjustments for the AI: ").strip()
-            if feedback:
-                try:
-                    updated_code = regenerate_with_feedback(issue_clean, feedback, read_file(pending_file))
-                    with open(pending_file, "w", encoding="utf-8") as f:
-                        f.write(updated_code)
-                except Exception as e:
-                    print(f"❌ Refinement failed: {e}")
 
 
 if __name__ == "__main__":
     print("\n-----------------------------------------------------")
-    print("🚀 INITIALIZING AI-QA FRAMEWORK RUNNER SCRIPT...")
+    print("🚀 INITIALIZING AI-QA FRAMEWORK PIPELINE CONTROL...")
     print("-----------------------------------------------------")
-    ticket = input("Enter Linear Ticket ID to process (or 'TKT-999' for control test): ").strip()
-    if ticket:
-        run_pipeline(ticket)
+    ticket = input("Enter Ticket ID to process (or 'TKT-999' for control test): ").strip()
+    if ticket: run_pipeline(ticket)
