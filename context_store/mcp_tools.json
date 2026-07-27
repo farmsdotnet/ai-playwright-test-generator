@@ -1,0 +1,61 @@
+[
+  {
+    "type": "function",
+    "function": {
+      "name": "tool_launch_browser",
+      "description": "Launches a live browser instance and navigates to the target application URL for visual tracking.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The absolute HTTP/HTTPS URL of the application under test."
+          }
+        },
+        "required": ["url"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "tool_inspect_dom",
+      "description": "Scans the live DOM tree of the current active browser page and returns matching elements based on text, placeholder, test-id, or tag attributes.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "semantic_hint": {
+            "type": "string",
+            "description": "A descriptive label, partial text, or key identifying the failed element (e.g., 'login', 'submit', 'username')."
+          }
+        },
+        "required": ["semantic_hint"]
+      }
+    }
+  },
+  {
+    "type": "function",
+    "function": {
+      "name": "tool_edit_page_object",
+      "description": "Programmatically updates a specific selector string variable inside a designated Page Object Model (POM) Python file.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "filename": {
+            "type": "string",
+            "description": "The exact target file name within the pages directory (e.g., 'login_page.py')."
+          },
+          "target_var": {
+            "type": "string",
+            "description": "The specific variable string property to modify (e.g., 'username_selector')."
+          },
+          "corrected_selector": {
+            "type": "string",
+            "description": "The new valid CSS selector, XPath, or data attribute string string (e.g., '[data-test=\"username\"]')."
+          }
+        },
+        "required": ["filename", "target_var", "corrected_selector"]
+      }
+    }
+  }
+]

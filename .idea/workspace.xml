@@ -5,21 +5,31 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="3509e951-4685-47c0-863a-c18c039bc311" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/context_store/pipeline_checkpoints/far-6_checkpoint_pom_state.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/context_store/pipeline_checkpoints/far-6_checkpoint_requirements.json" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/manifest_generator.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/pre_heal_pipe_1.62.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/pages/src/pages/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/context_store/2_OLD_glob_dom_rules.md" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/context_store/mcp_tools.json" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/mcp_engine/__init__.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/mcp_engine/browser_agent.py" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/pipeline_healer.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/context_store/child_contexts/FAR-5_ac.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/context_store/OLD_glob_dom_rules.md" beforeDir="false" afterPath="$PROJECT_DIR$/context_store/OLD_glob_dom_rules.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/context_store/child_contexts/FAR-6_ac.md" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/context_store/global_domain_rules.md" beforeDir="false" afterPath="$PROJECT_DIR$/context_store/global_domain_rules.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/context_store/pipeline_checkpoints/far-6_checkpoint_pom_state.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/context_store/pipeline_checkpoints/far-6_checkpoint_requirements.json" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/generate_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/generate_test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/manifest_generator.py" beforeDir="false" afterPath="$PROJECT_DIR$/manifest_generator.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pipeline.py" beforeDir="false" afterPath="$PROJECT_DIR$/pipeline.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pre_heal_pipe_1.62.py" beforeDir="false" afterPath="$PROJECT_DIR$/pre_heal_pipe_1.62.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/pages/base_page.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/pages/base_page.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/pages/login_page.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/pages/login_page.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/staging/test_far_5.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/tests/staging/test_far_6.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/staging/sample_bad_code.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/pages/src/pages/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/src/pages/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/farms_old test-tests/old_test_saucedemo_baseline.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/farms_old test-tests/old_test_saucedemo_baseline.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/farms_old test-tests/test_saucedemo_baseline.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/farms_old test-tests/test_saucedemo_baseline.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/farms_old test-tests/test_tkt-998.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/farms_old test-tests/test_tkt-998.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/pending_review/plan_far_6.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/staging/sample_bad_code.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/staging/sample_bad_code.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/tests/staging/test_tkt_999.py" beforeDir="false" afterPath="$PROJECT_DIR$/tests/staging/test_tkt_999.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -74,11 +84,11 @@
       <recent name="C:\Users\farma\PycharmProjects\ai-qa-framework\tests" />
     </key>
     <key name="MoveFile.RECENT_KEYS">
+      <recent name="C:\Dev Projects 2026 Local\GIT\ai_qa_framework\context_store" />
+      <recent name="C:\Dev Projects 2026 Local\GIT\ai_qa_framework\context_store\child_contexts" />
+      <recent name="C:\Dev Projects 2026 Local\GIT\ai_qa_framework\src\pages\src" />
+      <recent name="C:\Dev Projects 2026 Local\GIT\ai_qa_framework\src\pages" />
       <recent name="C:\Dev Projects 2026 Local\GIT\ai_qa_framework\redundant_do_not_use" />
-      <recent name="C:\Users\farma\PycharmProjects\ai-qa-framework\tests" />
-      <recent name="C:\Users\farma\PycharmProjects\ai-qa-framework\tests\staging\farms_old test-tests" />
-      <recent name="C:\Users\farma\PycharmProjects\ai-qa-framework\src\pages" />
-      <recent name="C:\Users\farma\PycharmProjects\ai-qa-framework" />
     </key>
   </component>
   <component name="RunManager" selected="Python.run_staging">

@@ -5,6 +5,7 @@ import sys
 import subprocess
 from linear_fetch import save_ac_context
 from manifest_generator import generate_pom_manifest
+from pipeline_healer import SelfHealingCompiler
 
 BASE_DIR = r"C:\Dev Projects 2026 Local\GIT\ai_qa_framework"
 
@@ -17,8 +18,8 @@ def read_file(file_path):
 def compile_test_from_json_plan(issue_id, plan_file, pending_file):
     """
     DETERMINISTIC REFLECTIVE COMPILER:
-    Reads the abstract JSON execution plan, matches it dynamically with
-    the codebase directory modules, and assembles flawless Python syntax code.
+    Reads the abstract JSON execution plan, normalizes class prefixes,
+    and writes out clean, standardized Python Page Object Model syntax blocks.
     """
     print("⚡ Reflective Compiler: Parsing execution sequence and writing clean python file...")
     if not os.path.exists(plan_file):
@@ -31,22 +32,35 @@ def compile_test_from_json_plan(issue_id, plan_file, pending_file):
     issue_id_upper = issue_id.upper().strip()
     func_name = f"test_{issue_id_upper.lower().replace('-', '_')}"
 
+    # Normalize prefix flags on matching array entries cleanly
+    for step in execution_plan:
+        cls_name = step.get("class", "")
+        if cls_name.startswith("MISSING_"):
+            step["class"] = cls_name.replace("MISSING_", "")
+
     required_classes = set(step.get("class") for step in execution_plan if step.get("class"))
 
-    # Structural sync protection block
-    if "InventoryPage" not in required_classes and "FAR_6" in issue_id_upper:
-        required_classes.add("InventoryPage")
-
     import_lines = ["import pytest", "from playwright.sync_api import sync_playwright"]
+
+    # Safely merge page dictionary scopes
+    all_poms = {}
+    if "page_objects" in manifest:
+        all_poms.update(manifest["page_objects"])
+    if "infrastructure" in manifest:
+        all_poms.update(manifest["infrastructure"])
+
     for cls in required_classes:
-        if cls in manifest:
-            mod_path = manifest[cls].get("file_path", "").replace("/", ".").replace(".py", "")
+        if cls in all_poms:
+            mod_path = all_poms[cls].get("file_path", "").replace("/", ".").replace("\\", ".").replace(".py", "")
             import_lines.append(f"from {mod_path} import {cls}")
+        else:
+            # Automatic runtime mapping fallback for freshly generated modules
+            snake_cls = "".join(["_" + c.lower() if c.isupper() else c for c in cls]).lstrip("_")
+            import_lines.append(f"from src.pages.{snake_cls} import {cls}")
 
     instantiation_lines = []
     for cls in required_classes:
         var_name = "".join(["_" + c.lower() if c.isupper() else c for c in cls]).lstrip("_")
-        var_name = var_name.replace("_page", "page_object").replace("page_object", "_page")
         instantiation_lines.append(f"        {var_name} = {cls}(page)")
 
     step_lines = []
@@ -57,18 +71,8 @@ def compile_test_from_json_plan(issue_id, plan_file, pending_file):
 
         if not cls or not method: continue
 
-        # Guard: Overwrite common model class-drifts on the fly to protect POM boundaries
-        if cls == "LoginPage" and method in ["filter", "launch", "verify_on_inventory_page"]:
-            cls = "InventoryPage"
-
-        if method.startswith("MISSING_"):
-            step_lines.append(f"        # TODO: Implement missing page object operation layer: {method}")
-            continue
-
         var_name = "".join(["_" + c.lower() if c.isupper() else c for c in cls]).lstrip("_")
-        var_name = var_name.replace("_page", "page_object").replace("page_object", "_page")
-
-        formatted_args = ", ".join([f"'{a}'" if isinstance(a, str) else str(a) for a in args])
+        formatted_args = ", ".join([str(f"'{a}'" if isinstance(a, str) else a) for a in args])
         step_lines.append(f"        {var_name}.{method}({formatted_args})")
 
     scaffolded_code = (
@@ -119,6 +123,7 @@ def run_pipeline(issue_id):
     safe_id = issue_clean.lower().replace('-', '_')
 
     pending_dir = os.path.join(BASE_DIR, "tests", "pending_review")
+    os.makedirs(pending_dir, exist_ok=True)
     plan_file = os.path.join(pending_dir, f"plan_{safe_id}.json")
     pending_file = os.path.join(pending_dir, f"test_{safe_id}.py")
 
@@ -134,25 +139,22 @@ def run_pipeline(issue_id):
         print("❌ Reflective compiler failure.")
         return
 
-    python_exe = os.path.join(BASE_DIR, ".venv", "Scripts", "python.exe")
-    result = subprocess.run([python_exe, "-m", "pytest", pending_file, "--collect-only"], capture_output=True,
-                            text=True)
+    print("\n🔬 Entering Runtime Simulation and Discovery Stage...")
+    healer = SelfHealingCompiler()
+    is_stable = healer.execute_and_heal_plan(issue_clean)
 
-    if result.returncode != 0:
-        print("❌ Validation Gate Failure: Python syntax broken inside file.")
-        print(result.stderr)
+    if not is_stable:
+        print("\n❌ Validation Gate Failure: Test suite remains unstable after maximized healing cycles.")
         return
-
-    print("✅ System Synchronization Successful! File is 100% stable.")
 
     while True:
         if not os.path.exists(pending_file):
             print(f"❌ Operational Error: Expected file not found at {pending_file}")
             break
 
-        print(f"\n==================== [REVIEWING DRAFT]: {pending_file} ====================")
+        print(f"\n==================== [REVIEWING FINAL STABILIZED DRAFT]: {pending_file} ====================")
         print(read_file(pending_file))
-        print("=====================================================================")
+        print("==========================================================================================")
 
         choice = input("\nSelect Action -> [A]pprove | [D]ecline: ").strip().lower()
 
@@ -166,7 +168,7 @@ def run_pipeline(issue_id):
             print(f"🚀 Code block approved! Moved into staging: {dest}")
             run_post_approval_menu(dest)
             break
-        elif choice in ['d', 'r', 'decline']:
+        elif choice in ['d', 'decline']:
             if os.path.exists(pending_file):
                 os.remove(pending_file)
             print("🗑️ Script draft declined and discarded cleanly from disk.")

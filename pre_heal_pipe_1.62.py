@@ -1,5 +1,5 @@
 import os
-import re 
+import re
 import shutil
 import requests
 import sys
@@ -11,7 +11,7 @@ BASE_PATH = r"C:\Dev Projects 2026 Local\GIT\ai_qa_framework"
 
 
 def regenerate_with_feedback(issue_id, feedback_text, current_code):
-    main_skill = read_file(os.path.join(BASE_PATH, "context_store", "global_domain_rules.md"))
+    main_skill = read_file(os.path.join(BASE_PATH, "context_store", "2_OLD_glob_dom_rules.md"))
     child_skill = read_file(
         os.path.join(BASE_PATH, "context_store", "child_contexts", f"{issue_id.upper().strip()}_ac.md"))
     pom_reference = get_pom_references()

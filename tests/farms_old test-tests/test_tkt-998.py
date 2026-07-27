@@ -1,5 +1,5 @@
 from playwright.sync_api import Page
-from src.pages.login_page import LoginPage
+from src.pages import LoginPage
 
 def test_invalid_login(page: Page):
     """

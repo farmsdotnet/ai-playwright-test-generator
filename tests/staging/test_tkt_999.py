@@ -1,5 +1,5 @@
 from playwright.sync_api import sync_playwright
-from src.pages.login_page import LoginPage
+from src.pages import LoginPage
 # End of automated imports
 
 def test_tkt_999():

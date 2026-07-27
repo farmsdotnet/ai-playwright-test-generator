@@ -19,9 +19,11 @@ website info = basic retail e-commerce application which provides users ability 
 - Use the standard `page` fixture provided natively by `pytest-playwright`.
 - Never use hardcoded browser selectors inside test files.
 - Tests should look structurally clean:
+
 ```python
 from playwright.sync_api import Page
-from src.pages.login_page import LoginPage
+from src.pages import LoginPage
+
 
 def test_example(page: Page):
     login_page = LoginPage(page)

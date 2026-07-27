@@ -8,15 +8,15 @@
     ]
   },
   {
-    "class": "InventoryPage",
-    "method": "sort_products",
+    "class": "MISSortingPage",
+    "method": "sort_items_by_price",
     "args": [
-      "Price (Low to High)"
+      "Low to High"
     ]
   },
   {
-    "class": "InventoryPage",
-    "method": "verify_first_product",
+    "class": "MISSortingPage",
+    "method": "verify_first_item",
     "args": [
       "Sauce Labs Onesie",
       "$7.99"

@@ -1,4 +1,0 @@
-{
-  "issue_id": "FAR-6",
-  "abstract_actions": "1. Navigate to the Swag Labs login page.\n2. Enter \"standard_user\" into the username field.\n3. Enter \"secret_sauce\" into the password field.\n4. Submit the form.\n5. Click on the sort option and select \"Price (Low to High)\".\n6. Verify that the first item displayed is labeled \"Sauce Labs Onesie\" with a price of $7.99."
-}
