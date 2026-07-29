@@ -1,0 +1,7 @@
+# Claude Code itself is a separate install (not a pip package) - see README.md.
+playwright>=1.45.0
+pytest>=8.0.0
+pytest-playwright>=0.5.0
+# Only needed for the optional TestRail ingestion path (--testrail-case)
+requests>=2.31.0
+python-dotenv>=1.0.0

@@ -1,0 +1,41 @@
+{
+  "scenario_name": "tr46_verify_inventory_products_sort_functionality",
+  "base_url": "https://www.saucedemo.com/",
+  "steps": [
+    {
+      "step_id": 1,
+      "step_type": "assertion",
+      "description": "<div style=\"background-color: #1e1f22; color: #bcbec4;\" data-pasted=\"true\"><pre style=\"font-family: 'JetBrains Mono',monospace; font-size: 12.0pt;\">Navigate to <span style=\"color: #56a8f5;\">https://www.saucedemo.com</span></pre></div>",
+      "target_element_description": null,
+      "expected_result": "<p>Browser displays login page with associate elements</p>"
+    },
+    {
+      "step_id": 2,
+      "step_type": "assertion",
+      "description": "<div style=\"background-color: #1e1f22; color: #bcbec4;\" data-pasted=\"true\"><pre style=\"font-family: 'JetBrains Mono',monospace; font-size: 12.0pt;\">Enter the username \"standard_user\" into the username field.</pre></div>",
+      "target_element_description": null,
+      "expected_result": "<p>input accepted into field</p>"
+    },
+    {
+      "step_id": 3,
+      "step_type": "assertion",
+      "description": "<div style=\"background-color: #1e1f22; color: #bcbec4;\" data-pasted=\"true\"><pre style=\"font-family: 'JetBrains Mono',monospace; font-size: 12.0pt;\">Enter the password \"secret_sauce\" into the password field.</pre></div>",
+      "target_element_description": null,
+      "expected_result": "<p>input accepted into field</p>"
+    },
+    {
+      "step_id": 4,
+      "step_type": "assertion",
+      "description": "<div style=\"background-color: #1e1f22; color: #bcbec4;\" data-pasted=\"true\"><pre style=\"font-family: 'JetBrains Mono',monospace; font-size: 12.0pt;\"><span style=\"color: #cf8e6d;\">* </span>Click the Login button.</pre></div>",
+      "target_element_description": null,
+      "expected_result": "<p>Products Inventory page displayed at&nbsp;<a data-fr-linked=\"true\" href=\"https://www.saucedemo.com/inventory.html\" data-pasted=\"true\">https://www.saucedemo.com/inventory.html</a></p>"
+    },
+    {
+      "step_id": 5,
+      "step_type": "assertion",
+      "description": "<p>Click the Sort Products Dropdown 'Name [Z to A]'</p>",
+      "target_element_description": null,
+      "expected_result": "<p>Second item displayed contains text 'Sauce Labs Onesie'<span style=\"font-size: 14px;\" data-pasted=\"true\"><br></span></p>"
+    }
+  ]
+}
