@@ -1,4 +1,4 @@
-# Saucedemo AI QA Pipeline (v0.3 - optional TestRail ingestion)
+# AI QA Pipeline (v0.3 - optional TestRail ingestion)
 
 Two front doors, one pipeline: AC markdown **or** a TestRail test case -> Claude Code (native
 Playwright MCP) -> validated Playwright/pytest POM test.
