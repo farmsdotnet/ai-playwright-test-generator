@@ -95,7 +95,8 @@ class Target(ABC):
 
     # ---- execution ----------------------------------------------------------------------------
     @abstractmethod
-    def execute(self, generated_root: Path, test_path: Path) -> int: ...
+    def execute(self, generated_root: Path, test_path: Path, headed: bool = False) -> int:
+        """Run one generated test. headed=True shows the browser window (cli.py --headed)."""
 
 
 # =============================================================================================
@@ -187,11 +188,16 @@ internally, rather than forcing the test to call one page-object method per step
 When all three files are written, stop - no further explanation needed.
 """
 
-    def execute(self, generated_root: Path, test_path: Path) -> int:
+    def execute(self, generated_root: Path, test_path: Path, headed: bool = False) -> int:
         # sys.executable -m pytest, not bare "pytest" - avoids relying on whatever pytest.exe
         # happens to resolve to on PATH, which on Windows can be a stale/broken launcher stub
         # (the same "Fatal error in launcher" class of issue as pip.exe).
-        return subprocess.run([sys.executable, "-m", "pytest", str(test_path), "-v"]).returncode
+        cmd = [sys.executable, "-m", "pytest", str(test_path), "-v"]
+        if headed:
+            # pytest-playwright's flag. It applies to tests that use its `page` fixture; a test
+            # that launches its own browser with sync_playwright() decides headless itself.
+            cmd.append("--headed")
+        return subprocess.run(cmd).returncode
 
 
 # =============================================================================================
@@ -370,7 +376,7 @@ internally, rather than forcing the test to call one page-object method per step
 When all three files are written, stop - no further explanation needed.
 """
 
-    def execute(self, generated_root: Path, test_path: Path) -> int:
+    def execute(self, generated_root: Path, test_path: Path, headed: bool = False) -> int:
         if shutil.which("npx") is None:
             print("Couldn't find 'npx' on PATH - install Node.js 18+ to run TypeScript tests.")
             return 1
@@ -387,9 +393,11 @@ When all three files are written, stop - no further explanation needed.
                 print("Installing the Chromium browser for Playwright failed - see above.")
                 return browsers.returncode
         spec = os.path.relpath(test_path, generated_root).replace("\\", "/")
-        return subprocess.run(
-            node_command("npx", "playwright", "test", spec), cwd=generated_root
-        ).returncode
+        args = ["npx", "playwright", "test", spec]
+        if headed:
+            # overrides `headless: true` in playwright.config.ts for this run only
+            args.append("--headed")
+        return subprocess.run(node_command(*args), cwd=generated_root).returncode
 
 
 # =============================================================================================

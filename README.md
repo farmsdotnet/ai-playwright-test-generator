@@ -30,7 +30,12 @@ generated_ts/
   tests/<scenario>.spec.ts              (test() + expect() from @playwright/test, `// step <id>:` comments)
 ```
 
-`[e]xecute` runs `npx playwright test tests/<scenario>.spec.ts` inside `generated_ts/`. The first
+`[e]xecute` runs `npx playwright test tests/<scenario>.spec.ts` inside `generated_ts/`. Runs are
+headless by default; add `--headed` to watch the browser
+(`python cli.py samples/login_AC.md --target typescript --headed`), or re-run an existing spec
+yourself from `generated_ts/` with `npm run test:headed`, or `npx playwright test --ui` to step
+through it in Playwright's UI mode. `--headed` works for the Python target too, for tests that use
+pytest-playwright's `page` fixture. The first
 time, it runs `npm install` and `npx playwright install chromium` for you. The config keeps a
 trace, screenshot and video for any failing test (`test-results/`) and writes an HTML report
 (`npx playwright show-report`). `npm run typecheck` type-checks everything with `tsc --noEmit`.
@@ -226,6 +231,7 @@ this project's `.mcp.json`. If you're not on Windows, remove the `cmd`/`/c` wrap
 ```
 python cli.py samples/login_AC.md                       # Python + pytest (default)
 python cli.py samples/login_AC.md --target typescript   # TypeScript + Playwright Test (v0.4)
+python cli.py samples/login_AC.md --target typescript --headed   # ...and watch it run
 ```
 
 **From a TestRail case (v0.3, optional):**

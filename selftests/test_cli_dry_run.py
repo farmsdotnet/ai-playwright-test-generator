@@ -86,3 +86,9 @@ def test_unknown_target_is_rejected_by_argparse(workspace):
     proc = run_cli(workspace, "--target", "java")
     assert proc.returncode == 2
     assert "invalid choice: 'java'" in proc.stderr
+
+
+def test_headed_flag_is_accepted_and_shown_at_the_execute_prompt(workspace):
+    proc = run_cli(workspace, "--target", "typescript", "--headed")
+    assert proc.returncode == 0, proc.stdout + proc.stderr
+    assert "[e]xecute script (headed), [c]lose app:" in proc.stdout

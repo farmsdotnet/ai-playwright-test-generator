@@ -68,3 +68,36 @@ def test_python_scaffold_is_the_v03_conftest(tmp_path):
     assert (tmp_path / "conftest.py").read_text() == (
         "import sys\nfrom pathlib import Path\n\nsys.path.insert(0, str(Path(__file__).parent))\n"
     )
+
+
+class _Recorder:
+    def __init__(self):
+        self.calls = []
+
+    def __call__(self, cmd, **kwargs):
+        self.calls.append(cmd)
+        return type("Done", (), {"returncode": 0})()
+
+
+@pytest.mark.parametrize("headed", [False, True])
+def test_typescript_execute_passes_headed_through(tmp_path, monkeypatch, headed):
+    import targets
+    (tmp_path / "node_modules" / "@playwright" / "test").mkdir(parents=True)
+    rec = _Recorder()
+    monkeypatch.setattr(targets.shutil, "which", lambda _: "/usr/bin/npx")
+    monkeypatch.setattr(targets.subprocess, "run", rec)
+    rc = get_target("typescript").execute(tmp_path, tmp_path / "tests" / "login.spec.ts", headed=headed)
+    assert rc == 0
+    cmd = rec.calls[-1]
+    assert cmd[-2:] == (["tests/login.spec.ts", "--headed"] if headed else ["test", "tests/login.spec.ts"])
+
+
+@pytest.mark.parametrize("headed", [False, True])
+def test_python_execute_passes_headed_through(tmp_path, monkeypatch, headed):
+    import targets
+    rec = _Recorder()
+    monkeypatch.setattr(targets.subprocess, "run", rec)
+    get_target("python").execute(tmp_path, tmp_path / "tests" / "test_login.py", headed=headed)
+    cmd = rec.calls[-1]
+    assert ("--headed" in cmd) is headed
+    assert cmd[1:3] == ["-m", "pytest"]
