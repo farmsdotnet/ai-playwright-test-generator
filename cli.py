@@ -129,6 +129,7 @@ def _generate_and_validate(
     project_root: Path,
     settings,
     target: Target,
+    headed: bool = False,
 ) -> None:
     """Shared core: run Claude Code with retries, validate, offer to execute. Used by both the
     AC.md path (where Claude Code builds the manifest itself as part of the first turn) and the
@@ -168,15 +169,16 @@ def _generate_and_validate(
     print(f"Page object written: {page_object_path}")
     print(f"Test written: {test_path}")
 
-    choice = input("\n[e]xecute script, [c]lose app: ").strip().lower()
+    mode = " (headed)" if headed else ""
+    choice = input(f"\n[e]xecute script{mode}, [c]lose app: ").strip().lower()
     if choice == "e":
         # pytest for Python, `npx playwright test` for TypeScript - see Target.execute()
-        target.execute(target.generated_root(project_root, settings), test_path)
+        target.execute(target.generated_root(project_root, settings), test_path, headed=headed)
     else:
         print("Closing.")
 
 
-def run(ac_md_path: str, target: Target | None = None) -> None:
+def run(ac_md_path: str, target: Target | None = None, headed: bool = False) -> None:
     target = target or get_target("python")
     settings = load_settings()
     project_root = Path.cwd()
@@ -198,11 +200,13 @@ def run(ac_md_path: str, target: Target | None = None) -> None:
         target=target,
     )
     _generate_and_validate(
-        prompt, manifest_path, page_object_path, test_path, project_root, settings, target
+        prompt, manifest_path, page_object_path, test_path, project_root, settings, target, headed
     )
 
 
-def run_from_testrail(case_id: int, base_url: str, target: Target | None = None) -> None:
+def run_from_testrail(
+    case_id: int, base_url: str, target: Target | None = None, headed: bool = False
+) -> None:
     from testrail_adapter import case_to_manifest
     from testrail_client import fetch_case
 
@@ -229,7 +233,7 @@ def run_from_testrail(case_id: int, base_url: str, target: Target | None = None)
         target=target,
     )
     _generate_and_validate(
-        prompt, manifest_path, page_object_path, test_path, project_root, settings, target
+        prompt, manifest_path, page_object_path, test_path, project_root, settings, target, headed
     )
 
 
@@ -252,6 +256,10 @@ def main() -> None:
         help="Language/runner to generate: python (Playwright + pytest, the default) or "
              "typescript (Playwright Test, @playwright/test)",
     )
+    parser.add_argument(
+        "--headed", action="store_true",
+        help="Show the browser window when you choose [e]xecute (default: headless)",
+    )
     args = parser.parse_args()
 
     if args.testrail_case and args.ac_md:
@@ -263,9 +271,9 @@ def main() -> None:
 
     target = get_target(args.target)
     if args.testrail_case:
-        run_from_testrail(args.testrail_case, args.base_url, target)
+        run_from_testrail(args.testrail_case, args.base_url, target, args.headed)
     else:
-        run(args.ac_md, target)
+        run(args.ac_md, target, args.headed)
 
 
 if __name__ == "__main__":
