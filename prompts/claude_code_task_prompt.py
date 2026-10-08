@@ -16,11 +16,29 @@ other is exactly the kind of stale-copy bug this project hit earlier with duplic
 build_retry_prompt (used by both paths on a validation-failure retry turn) repeats the same rules
 in its own words for the same reason - it's a follow-up message, not a rebuild of the main prompt,
 so it can't just call the same helper without restating context Claude Code already has.
+
+v0.4: every builder takes an optional `target` (see targets.py). The grounding rules are the same
+for every target - only the method names they're spelled with change - while the "write the
+generated code" section comes from the target itself. With no target (or the Python target) the
+output is identical, character for character, to v0.3; selftests/test_prompts.py asserts that.
 """
 from __future__ import annotations
 
+from targets import PythonPytestTarget, Target
 
-def _grounding_and_generation_instructions(page_object_path: str, test_path: str) -> str:
+_DEFAULT_TARGET = PythonPytestTarget()
+
+
+def _plain(name: str) -> str:
+    """'`get_by_test_id(...)`' -> 'get_by_test_id', for the retry prompt's plainer wording."""
+    return name.strip("`").replace("(...)", "")
+
+
+def _grounding_and_generation_instructions(
+    page_object_path: str, test_path: str, target: Target | None = None
+) -> str:
+    t = target or _DEFAULT_TARGET
+    m = t.methods
     return f"""## Ground every locator in the real page
 Use the Playwright MCP tools to navigate to the base URL and capture an accessibility-tree \
 snapshot before writing any locators. If a later step requires interacting with the page first \
@@ -29,36 +47,21 @@ fresh snapshot before writing locators for that part of the page.
 
 An accessibility-tree snapshot shows an element's role and accessible name - it does NOT show \
 `id`, `class`, or `data-testid` HTML attributes, and has no concept of CSS/XPath structural \
-selectors (`:nth-child`, tag hierarchy, etc.). So `get_by_test_id(...)` and ANY raw \
-`.locator("...")` call with a CSS or XPath selector string are banned outright, regardless of what \
+selectors (`:nth-child`, tag hierarchy, etc.). So {m.test_id} and ANY raw \
+{m.raw_locator_example} call with a CSS or XPath selector string are banned outright, regardless of what \
 they target - not just obvious cases like `#some-id` or `[data-testid=...]`, but also class \
-selectors, structural selectors, anything. `get_by_placeholder` and `get_by_title` are also \
+selectors, structural selectors, anything. {m.placeholder} and {m.title} are also \
 banned: that text only becomes the accessible name when nothing else (a `<label>`, `aria-label`, \
 etc.) already claims it, so it can be invisible in the snapshot even when it looks like it should \
-be there - not reliably verifiable either way. Use only `get_by_role` (with its `name` filter), \
-`get_by_label`, `get_by_text`, or `get_by_alt_text` - all of which correspond directly to what a \
+be there - not reliably verifiable either way. Use only {m.role} (with its `name` {m.role_name_term}), \
+{m.label}, {m.text}, or {m.alt_text} - all of which correspond directly to what a \
 snapshot actually shows. If you need to disambiguate one of several matching elements, chain \
-`.nth()`, `.first()`, or `.last()` onto one of those four - that narrows an already-grounded \
+{m.chain_hint} onto one of those four - that narrows an already-grounded \
 locator, it doesn't introduce a new ungroundable one. Every value you put into one of the four \
 methods must match an element you actually observed in a snapshot during this session - never \
 invent or infer one.
 
-## Write the generated code
-Follow standard Page Object Model:
-- Write the page object(s) to `{page_object_path}`
-- Write the pytest test to `{test_path}`, using plain `playwright.sync_api` - the generated test \
-must run standalone and must not reference MCP anywhere; MCP is only for your exploration in this \
-session, not part of the runtime test.
-- A page object must not expose any method the manifest doesn't need.
-- The test must implement every step in the manifest, in order, nothing extra. Precede each step \
-(or tight logical group of steps) with a comment `# step <id>: <short description>` referencing \
-the manifest step_id(s) it implements. That comment can live in the test function itself, or \
-inside a page-object method the test calls, whichever is where that step actually happens - e.g. \
-a login() method that performs several AC steps should carry each of their step comments \
-internally, rather than forcing the test to call one page-object method per step.
-
-When all three files are written, stop - no further explanation needed.
-"""
+""" + t.code_writing_instructions(page_object_path, test_path)
 
 
 def build_task_prompt(
@@ -68,6 +71,7 @@ def build_task_prompt(
     page_object_path: str,
     test_path: str,
     feedback: str | None = None,
+    target: Target | None = None,
 ) -> str:
     numbered_ac = "\n".join(f"{i + 1}. {line}" for i, line in enumerate(ac_lines))
 
@@ -107,13 +111,14 @@ Write this manifest to `{manifest_path}` as JSON matching exactly this schema:
   ]
 }}
 
-""" + _grounding_and_generation_instructions(page_object_path, test_path)
+""" + _grounding_and_generation_instructions(page_object_path, test_path, target)
 
 
 def build_task_prompt_from_manifest(
     manifest_path: str,
     page_object_path: str,
     test_path: str,
+    target: Target | None = None,
 ) -> str:
     """First-turn prompt for the TestRail path: the manifest already exists on disk, written
     deterministically by testrail_adapter.py from a human-authored TestRail case - not something
@@ -128,14 +133,22 @@ a TestRail test case, not by you - treat it as the source of truth for this run 
 you'd built it yourself from Acceptance Criteria text. Do not modify it, reorder its steps, or \
 add/remove steps.
 
-""" + _grounding_and_generation_instructions(page_object_path, test_path)
+""" + _grounding_and_generation_instructions(page_object_path, test_path, target)
 
 
-def build_retry_prompt(feedback: str, manifest_path: str, page_object_path: str, test_path: str) -> str:
+def build_retry_prompt(
+    feedback: str,
+    manifest_path: str,
+    page_object_path: str,
+    test_path: str,
+    target: Target | None = None,
+) -> str:
     """Follow-up prompt for a `claude --resume` retry turn. Claude Code already has the original
     task and its own file-write history in this session, so this doesn't restate the whole task -
     just what failed and where to fix it. Shared by both the AC.md and TestRail paths - the retry
     concern (bad locator, drifted step) is identical regardless of where the manifest came from."""
+    t = target or _DEFAULT_TARGET
+    m = t.methods
     return f"""The test you just wrote failed an automated validation check. Fix it in place.
 
 ## Validation failures
@@ -143,10 +156,10 @@ def build_retry_prompt(feedback: str, manifest_path: str, page_object_path: str,
 
 Re-check `{page_object_path}` and `{test_path}` against the manifest at `{manifest_path}`. If a \
 locator was flagged as ungrounded, re-navigate and capture a fresh Playwright MCP snapshot before \
-correcting it - don't guess a replacement, and don't fall back to get_by_test_id, get_by_placeholder, \
-get_by_title, or any raw `.locator(...)` call with a CSS/XPath selector string, since none of \
-those are reliably verifiable from a snapshot; use get_by_role, get_by_label, get_by_text, or \
-get_by_alt_text instead. If a step was flagged as missing or drifted, fix the `# step <id>` \
+correcting it - don't guess a replacement, and don't fall back to {_plain(m.test_id)}, {_plain(m.placeholder)}, \
+{_plain(m.title)}, or any raw `.locator(...)` call with a CSS/XPath selector string, since none of \
+those are reliably verifiable from a snapshot; use {_plain(m.role)}, {_plain(m.label)}, {_plain(m.text)}, or \
+{_plain(m.alt_text)} instead. If a step was flagged as missing or drifted, fix the `{t.step_comment_token} step <id>` \
 comments and the step coverage itself, not just the wording. Update the files directly, then stop \
 - no further explanation needed.
 """

@@ -1,0 +1,38 @@
+You are a senior SDET. Complete this task end-to-end using the tools available to you (the Playwright MCP browser tools, plus your own file read/write tools). Do not ask for confirmation or pause partway through - finish the whole task, then stop.
+
+## Acceptance Criteria (in execution order)
+Base URL: https://www.saucedemo.com
+
+1. Navigate to https://www.saucedemo.com
+2. Click the Login button.
+
+## Step 1 - Build the step manifest
+Convert the AC above into an ordered manifest of test steps: exactly one step per AC line above, in the same order - no merging, no skipping, no steps added beyond what's stated. For each step, decide:
+- step_type: "action" or "assertion"
+- description: the AC line, lightly cleaned up
+- target_element_description: plain-language description of the UI element this step acts on or checks, or null
+- expected_result: what should be true after this step, or null for a pure action
+
+Write this manifest to `generated/login_manifest.json` as JSON matching exactly this schema:
+{
+  "scenario_name": "short_snake_case_name",
+  "base_url": "https://www.saucedemo.com",
+  "steps": [
+    {"step_id": 1, "step_type": "action", "description": "...",
+      "target_element_description": null, "expected_result": null}
+  ]
+}
+
+## Ground every locator in the real page
+Use the Playwright MCP tools to navigate to the base URL and capture an accessibility-tree snapshot before writing any locators. If a later step requires interacting with the page first to reach elements it references, use the appropriate browser tools to get there, then capture a fresh snapshot before writing locators for that part of the page.
+
+An accessibility-tree snapshot shows an element's role and accessible name - it does NOT show `id`, `class`, or `data-testid` HTML attributes, and has no concept of CSS/XPath structural selectors (`:nth-child`, tag hierarchy, etc.). So `get_by_test_id(...)` and ANY raw `.locator("...")` call with a CSS or XPath selector string are banned outright, regardless of what they target - not just obvious cases like `#some-id` or `[data-testid=...]`, but also class selectors, structural selectors, anything. `get_by_placeholder` and `get_by_title` are also banned: that text only becomes the accessible name when nothing else (a `<label>`, `aria-label`, etc.) already claims it, so it can be invisible in the snapshot even when it looks like it should be there - not reliably verifiable either way. Use only `get_by_role` (with its `name` filter), `get_by_label`, `get_by_text`, or `get_by_alt_text` - all of which correspond directly to what a snapshot actually shows. If you need to disambiguate one of several matching elements, chain `.nth()`, `.first()`, or `.last()` onto one of those four - that narrows an already-grounded locator, it doesn't introduce a new ungroundable one. Every value you put into one of the four methods must match an element you actually observed in a snapshot during this session - never invent or infer one.
+
+## Write the generated code
+Follow standard Page Object Model:
+- Write the page object(s) to `generated/page_objects/login_page.py`
+- Write the pytest test to `generated/tests/test_login.py`, using plain `playwright.sync_api` - the generated test must run standalone and must not reference MCP anywhere; MCP is only for your exploration in this session, not part of the runtime test.
+- A page object must not expose any method the manifest doesn't need.
+- The test must implement every step in the manifest, in order, nothing extra. Precede each step (or tight logical group of steps) with a comment `# step <id>: <short description>` referencing the manifest step_id(s) it implements. That comment can live in the test function itself, or inside a page-object method the test calls, whichever is where that step actually happens - e.g. a login() method that performs several AC steps should carry each of their step comments internally, rather than forcing the test to call one page-object method per step.
+
+When all three files are written, stop - no further explanation needed.

@@ -1,14 +1,102 @@
-# AI QA Pipeline (v0.3 - optional TestRail ingestion)
+# AI QA Pipeline (v0.4 - Python or TypeScript output)
 
-Two front doors, one pipeline: AC markdown **or** a TestRail test case -> Claude Code (native
-Playwright MCP) -> validated Playwright/pytest POM test.
+Two front doors, one pipeline, two output languages: AC markdown **or** a TestRail test case ->
+Claude Code (native Playwright MCP) -> validated Playwright Page Object Model test, written in
+**Python + pytest** (the default) or **TypeScript + Playwright Test** (`--target typescript`).
 
 v0.1 drove a hand-rolled Python agentic loop against the raw Anthropic API, billed per token.
 v0.2 replaced that with Claude Code itself (billed against your Claude Pro subscription's included
 usage instead), using its native MCP support to drive the same Playwright MCP server. v0.3 adds a
 second, optional input source - an existing TestRail test case - without touching anything
 downstream: the deterministic validation gate doesn't care who wrote the code or where the manifest
-came from, only what's actually in it.
+came from, only what's actually in it. v0.4 adds a second output language the same way - see
+[v0.4: TypeScript target](#v04-typescript-target) below.
+
+## v0.4: TypeScript target
+
+```
+python cli.py samples/login_AC.md --target typescript
+python cli.py --testrail-case 46 --base-url https://www.saucedemo.com --target typescript
+```
+
+Same AC file, same manifest, same Playwright MCP grounding, same validator - the only thing that
+changes is the language the page object and test are written in:
+
+```
+generated_ts/
+  package.json, playwright.config.ts, tsconfig.json, .gitignore   (written once, never overwritten)
+  <scenario>_manifest.json
+  pageObjects/<scenario>.page.ts        (exported classes, async methods, getByRole/getByLabel/...)
+  tests/<scenario>.spec.ts              (test() + expect() from @playwright/test, `// step <id>:` comments)
+```
+
+`[e]xecute` runs `npx playwright test tests/<scenario>.spec.ts` inside `generated_ts/`. The first
+time, it runs `npm install` and `npx playwright install chromium` for you. The config keeps a
+trace, screenshot and video for any failing test (`test-results/`) and writes an HTML report
+(`npx playwright show-report`). `npm run typecheck` type-checks everything with `tsc --noEmit`.
+
+**How it's built - `targets.py`.** Everything language-specific lives in one place: a `Target`
+per language that owns the output paths, the one-time scaffold (conftest.py for Python,
+package.json/config for TypeScript), the Playwright method names the prompt uses (`get_by_role` vs
+`getByRole`), the "write the generated code" section of the prompt, the regexes the validator
+uses to read the code back, and how `[e]xecute` runs it. Nothing else knows which language it is
+producing:
+
+- **Untouched:** `md_parser.py`, `testrail_client.py`, `testrail_adapter.py`, `models.py`
+  (manifest schema), the Claude Code invocation / `--resume` retry loop.
+- **Parameterised, not forked:** `prompts/claude_code_task_prompt.py` and `validator.py` take a
+  `target`. The grounding rules are written once and spelled with each target's method names, so
+  Python and TypeScript can't drift apart. With the Python target the prompts are identical,
+  character for character, to v0.3 - `selftests/test_prompts.py` checks that against saved
+  copies of v0.3's output, so the proven Python path is provably unchanged.
+- **Why the validator didn't need rewriting:** grounding checks the four strategy *concepts*
+  (role, label, text, alt text) against the accessibility-tree snapshot. The snapshot is the same
+  whatever language the test is written in; only the regex that pulls `getByRole('button', {
+  name: 'Login' })` out of a .ts file differs from the one for `get_by_role("button",
+  name="Login")`.
+
+Adding a third language (Java, C#) means one new `Target` subclass - nothing else changes.
+
+### Validator hardening (applies to both languages)
+
+Two gaps found while making the validator language-agnostic, both closed for Python and
+TypeScript alike:
+
+- **`get_by_role`'s `name` is now grounded, not just the role.** v0.3 only checked the first
+  string argument - the role itself, e.g. `"button"` - so `get_by_role("button", name="Logn")`
+  passed because `button` appeared in the snapshot, even though nothing was named `Logn`. That's the
+  same class of bug as the original `get_by_test_id("username")` one.
+- **Page-level selector shortcuts are banned**, e.g. `page.click("#login-button")`,
+  `page.fill(...)`, `page.query_selector(...)`, `page.$(...)` in TypeScript. They take a raw
+  selector string - the same escape hatch as `.locator("...")`, just spelled differently.
+
+### Self-tests
+
+```
+pip install pytest
+python -m pytest selftests -v
+```
+
+50 tests, no Claude login, network or browser needed. They cover: the Python prompts are
+unchanged from v0.3; the TypeScript prompts contain no Python method names; every banned or
+hallucinated locator kind fails in both languages; step coverage and drift in both languages;
+and a full `python cli.py ... --target python|typescript` run with Claude Code replaced by
+`selftests/fake_claude.py`, including a hallucinated locator being caught on attempt 1 and fixed
+on the `--resume` retry. (The CLI dry-run tests skip on Windows - the fake `claude` relies on a
+POSIX shebang - the rest run everywhere.)
+
+Also verified by hand while building v0.4: a TypeScript page object and spec in exactly the shape
+the prompt asks for were checked by the validator against a real Playwright accessibility
+snapshot, type-checked with `tsc --noEmit`, and run through `[e]xecute`'s code path
+(`npx playwright test`) - passing with correct credentials, failing with the trace and
+screenshot kept with wrong ones.
+
+### Housekeeping in v0.4
+
+- `.gitignore` added. `.env`, `__pycache__/` and the `.playwright-mcp/` session logs are no
+  longer tracked. **The repo is public and `.env` with TestRail credentials was committed in
+  v0.3 - those credentials are still in git history, so revoke that API key** (the TestRail trial
+  has expired, which may have done this already). Use `.env.example` as the template.
 
 ## How it fits together
 
@@ -136,7 +224,8 @@ this project's `.mcp.json`. If you're not on Windows, remove the `cmd`/`/c` wrap
 
 **From an AC.md file (v0.1/v0.2 path, unchanged):**
 ```
-python cli.py samples/login_AC.md
+python cli.py samples/login_AC.md                       # Python + pytest (default)
+python cli.py samples/login_AC.md --target typescript   # TypeScript + Playwright Test (v0.4)
 ```
 
 **From a TestRail case (v0.3, optional):**
@@ -146,7 +235,8 @@ python cli.py --testrail-case 4075 --base-url https://www.saucedemo.com
 `--base-url` is required here - unlike an AC.md file, a TestRail case has no inherent field for
 the URL of the app under test, so it has to be supplied explicitly.
 
-Either way, output lands in `generated/`: the step manifest, the page object, and the test file.
+Either way, output lands in `generated/` (or `generated_ts/` with `--target typescript`): the step
+manifest, the page object, and the test file.
 
 ## Optional: TestRail ingestion (v0.3)
 
