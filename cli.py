@@ -16,25 +16,8 @@ from prompts.claude_code_task_prompt import (
     build_task_prompt_from_manifest,
 )
 from slug import slugify
+from targets import TARGETS, Target, get_target
 from validator import validate
-
-
-def _ensure_generated_conftest(generated_dir: Path) -> None:
-    """`page_objects/` and `tests/` are sibling directories under `generated/`, so a generated
-    test's `from page_objects.<x> import <Y>` has nothing to resolve `page_objects` against unless
-    `generated/` itself is on sys.path. pytest discovers and loads every conftest.py between its
-    rootdir and the test file being run, regardless of package structure or import-mode settings,
-    so a conftest.py right here is the standard, version-agnostic fix - it just needs to exist
-    once, not be regenerated per scenario, so this only writes it if it's missing."""
-    conftest_path = generated_dir / "conftest.py"
-    if conftest_path.exists():
-        return
-    conftest_path.write_text(
-        "import sys\n"
-        "from pathlib import Path\n\n"
-        "sys.path.insert(0, str(Path(__file__).parent))\n",
-        encoding="utf-8",
-    )
 
 
 def _slugify_ac_filename(name: str) -> str:
@@ -124,14 +107,17 @@ def _read_generated(
     return manifest, generated
 
 
-def _scenario_paths(project_root: Path, settings, scenario: str) -> tuple[Path, Path, Path]:
-    generated_dir = project_root / settings.generated_dir
-    manifest_path = generated_dir / f"{scenario}_manifest.json"
-    page_object_path = generated_dir / "page_objects" / f"{scenario}_page.py"
-    test_path = generated_dir / "tests" / f"test_{scenario}.py"
+def _scenario_paths(
+    project_root: Path, settings, scenario: str, target: Target
+) -> tuple[Path, Path, Path]:
+    """Where this scenario's manifest, page object and test go - decided by the target, e.g.
+    generated/tests/test_login.py for Python, generated_ts/tests/login.spec.ts for TypeScript.
+    Also makes sure the target's one-time scaffolding (conftest.py / package.json etc.) exists."""
+    generated_root = target.generated_root(project_root, settings)
+    manifest_path, page_object_path, test_path = target.file_paths(generated_root, scenario)
     for p in (manifest_path, page_object_path, test_path):
         p.parent.mkdir(parents=True, exist_ok=True)
-    _ensure_generated_conftest(generated_dir)
+    target.ensure_project(generated_root)
     return manifest_path, page_object_path, test_path
 
 
@@ -142,6 +128,7 @@ def _generate_and_validate(
     test_path: Path,
     project_root: Path,
     settings,
+    target: Target,
 ) -> None:
     """Shared core: run Claude Code with retries, validate, offer to execute. Used by both the
     AC.md path (where Claude Code builds the manifest itself as part of the first turn) and the
@@ -157,7 +144,7 @@ def _generate_and_validate(
     for attempt in range(1, total_attempts + 1):
         print(f"Running Claude Code (attempt {attempt}/{total_attempts})...")
         turn_prompt = initial_prompt if attempt == 1 else build_retry_prompt(
-            feedback, str(manifest_path), str(page_object_path), str(test_path)
+            feedback, str(manifest_path), str(page_object_path), str(test_path), target=target
         )
         events, final = _run_claude(
             turn_prompt, cwd=project_root, timeout=settings.claude_timeout_seconds,
@@ -169,7 +156,7 @@ def _generate_and_validate(
             print(f"  session cost so far: ${cost:.4f}")
 
         manifest, generated = _read_generated(manifest_path, page_object_path, test_path, events)
-        result = validate(manifest, generated)
+        result = validate(manifest, generated, target=target)
         print(f"  validation: {result.summary()}")
         if result.passed:
             break
@@ -183,23 +170,24 @@ def _generate_and_validate(
 
     choice = input("\n[e]xecute script, [c]lose app: ").strip().lower()
     if choice == "e":
-        # sys.executable -m pytest, not bare "pytest" - avoids relying on whatever pytest.exe
-        # happens to resolve to on PATH, which on Windows can be a stale/broken launcher stub
-        # (the same "Fatal error in launcher" class of issue as pip.exe). This guarantees the
-        # exact same interpreter already running cli.py is the one running pytest too.
-        subprocess.run([sys.executable, "-m", "pytest", str(test_path), "-v"])
+        # pytest for Python, `npx playwright test` for TypeScript - see Target.execute()
+        target.execute(target.generated_root(project_root, settings), test_path)
     else:
         print("Closing.")
 
 
-def run(ac_md_path: str) -> None:
+def run(ac_md_path: str, target: Target | None = None) -> None:
+    target = target or get_target("python")
     settings = load_settings()
     project_root = Path.cwd()
     parsed = parse_ac_md(ac_md_path)
     print(f"Parsed AC ({len(parsed.ac_lines)} lines) - base URL: {parsed.base_url}")
+    print(f"Target: {target.display_name}")
 
     scenario = _slugify_ac_filename(ac_md_path)
-    manifest_path, page_object_path, test_path = _scenario_paths(project_root, settings, scenario)
+    manifest_path, page_object_path, test_path = _scenario_paths(
+        project_root, settings, scenario, target
+    )
 
     prompt = build_task_prompt(
         base_url=parsed.base_url,
@@ -207,25 +195,28 @@ def run(ac_md_path: str) -> None:
         manifest_path=str(manifest_path),
         page_object_path=str(page_object_path),
         test_path=str(test_path),
+        target=target,
     )
     _generate_and_validate(
-        prompt, manifest_path, page_object_path, test_path, project_root, settings
+        prompt, manifest_path, page_object_path, test_path, project_root, settings, target
     )
 
 
-def run_from_testrail(case_id: int, base_url: str) -> None:
+def run_from_testrail(case_id: int, base_url: str, target: Target | None = None) -> None:
     from testrail_adapter import case_to_manifest
     from testrail_client import fetch_case
 
+    target = target or get_target("python")
     settings = load_settings()
     project_root = Path.cwd()
 
     case = fetch_case(case_id)
     manifest = case_to_manifest(case, base_url)
     print(f"Fetched TestRail case {case_id}: '{case.get('title')}' ({len(manifest.steps)} steps)")
+    print(f"Target: {target.display_name}")
 
     manifest_path, page_object_path, test_path = _scenario_paths(
-        project_root, settings, manifest.scenario_name
+        project_root, settings, manifest.scenario_name, target
     )
     # Written deterministically, right now, in plain Python - no LLM call needed for this part,
     # since TestRail's Steps-template data is already exactly our StepManifest shape.
@@ -235,15 +226,16 @@ def run_from_testrail(case_id: int, base_url: str) -> None:
         manifest_path=str(manifest_path),
         page_object_path=str(page_object_path),
         test_path=str(test_path),
+        target=target,
     )
     _generate_and_validate(
-        prompt, manifest_path, page_object_path, test_path, project_root, settings
+        prompt, manifest_path, page_object_path, test_path, project_root, settings, target
     )
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="AI-driven AC/TestRail -> Playwright test generator"
+        description="AI-driven AC/TestRail -> Playwright test generator (Python or TypeScript)"
     )
     parser.add_argument("ac_md", nargs="?", help="Path to the Acceptance Criteria markdown file")
     parser.add_argument(
@@ -255,6 +247,11 @@ def main() -> None:
         help="Base URL of the app under test - required with --testrail-case, since TestRail "
              "cases don't carry this the way an AC.md file's first line does",
     )
+    parser.add_argument(
+        "--target", default="python", choices=sorted(TARGETS),
+        help="Language/runner to generate: python (Playwright + pytest, the default) or "
+             "typescript (Playwright Test, @playwright/test)",
+    )
     args = parser.parse_args()
 
     if args.testrail_case and args.ac_md:
@@ -264,10 +261,11 @@ def main() -> None:
     if not args.testrail_case and not args.ac_md:
         parser.error("Provide either an AC file path or --testrail-case.")
 
+    target = get_target(args.target)
     if args.testrail_case:
-        run_from_testrail(args.testrail_case, args.base_url)
+        run_from_testrail(args.testrail_case, args.base_url, target)
     else:
-        run(args.ac_md)
+        run(args.ac_md, target)
 
 
 if __name__ == "__main__":

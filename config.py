@@ -10,7 +10,8 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class Settings:
     max_generation_retries: int = 2  # total attempts = this + 1
-    generated_dir: str = "generated"
+    generated_dir: str = "generated"  # Python + pytest output (--target python, the default)
+    generated_ts_dir: str = "generated_ts"  # TypeScript + Playwright Test output (--target typescript)
     claude_timeout_seconds: int = 900  # generous ceiling for a single claude -p run
 
 

@@ -1,0 +1,7 @@
+The test you just wrote failed an automated validation check. Fix it in place.
+
+## Validation failures
+FAILED:
+- x
+
+Re-check `generated/page_objects/login_page.py` and `generated/tests/test_login.py` against the manifest at `generated/login_manifest.json`. If a locator was flagged as ungrounded, re-navigate and capture a fresh Playwright MCP snapshot before correcting it - don't guess a replacement, and don't fall back to get_by_test_id, get_by_placeholder, get_by_title, or any raw `.locator(...)` call with a CSS/XPath selector string, since none of those are reliably verifiable from a snapshot; use get_by_role, get_by_label, get_by_text, or get_by_alt_text instead. If a step was flagged as missing or drifted, fix the `# step <id>` comments and the step coverage itself, not just the wording. Update the files directly, then stop - no further explanation needed.
