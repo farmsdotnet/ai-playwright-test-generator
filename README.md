@@ -1,4 +1,6 @@
-# AI QA Pipeline (v0.4 - Python or TypeScript output)
+# AI Playwright Test Generator
+
+**v0.4** · Python or TypeScript output
 
 Two front doors, one pipeline, two output languages: AC markdown **or** a TestRail test case ->
 Claude Code (native Playwright MCP) -> validated Playwright Page Object Model test, written in
@@ -98,10 +100,10 @@ screenshot kept with wrong ones.
 
 ### Housekeeping in v0.4
 
-- `.gitignore` added. `.env`, `__pycache__/` and the `.playwright-mcp/` session logs are no
-  longer tracked. **The repo is public and `.env` with TestRail credentials was committed in
-  v0.3 - those credentials are still in git history, so revoke that API key** (the TestRail trial
-  has expired, which may have done this already). Use `.env.example` as the template.
+- `.gitignore` and `.env.example` added. For the optional TestRail path, copy `.env.example` to
+  `.env` and fill it in - `.env` is git-ignored and never committed.
+- The superseded v0.1/v0.2 code that lived in `OLD/` is no longer on `main`; it's still in the
+  history at commit `8ab2b74`, the last v0.3 commit.
 
 ## How it fits together
 
